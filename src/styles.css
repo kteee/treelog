@@ -1014,7 +1014,7 @@ button {
   min-height: 30px;
   padding-top: 5px;
   padding-bottom: 5px;
-  padding-right: 32px;
+  padding-right: 56px;
   border-radius: 6px;
   line-height: 20px;
   overflow-wrap: anywhere;
@@ -1067,16 +1067,18 @@ button {
   flex: 1;
 }
 
-.outline-add {
+/* 오른쪽 끝의 접기(−)와 추가(+) 버튼. 접힌 항목은 숨은 항목 수가 늘 보인다. */
+.outline-tools {
   position: absolute;
   top: 50%;
   right: 8px;
-  display: none;
+  display: flex;
+  gap: 3px;
   transform: translateY(-50%);
 }
 
-.outline-row:hover .outline-add,
-.outline-row.selected .outline-add {
+.outline-row:hover .tool-hover,
+.outline-row.selected .tool-hover {
   display: block;
 }
 
@@ -1343,12 +1345,3 @@ button {
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--branch, var(--line-strong)) 30%, transparent);
 }
 
-.outline-count {
-  margin-left: 6px;
-  padding: 0 6px;
-  border-radius: 9px;
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--text-soft);
-  background: var(--bg-soft);
-}

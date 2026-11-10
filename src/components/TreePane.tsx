@@ -640,19 +640,29 @@ export function TreePane({
         ) : (
           <span className={`outline-title ${node.title ? "" : "untitled"}`}>
             {node.title || "제목 없음"}
-            {node.collapsed && <span className="outline-count">{countBelow(id)}</span>}
           </span>
         )}
-        {!READ_ONLY && (
-          <button
-            className="tool outline-add"
-            aria-label="하위 항목 추가"
-            onPointerDown={(e) => e.stopPropagation()}
-            onClick={() => setEditingId(actions.addChild(id))}
-          >
-            +
-          </button>
-        )}
+        <div className="outline-tools" onPointerDown={(e) => e.stopPropagation()}>
+          {depth > 0 && node.children.length > 0 && (
+            <button
+              className={`tool tool-fold ${node.collapsed ? "folded" : "tool-hover"}`}
+              aria-label={node.collapsed ? "펼치기" : "접기"}
+              title={node.collapsed ? "펼치기" : "접기"}
+              onClick={() => actions.toggleCollapsed(id)}
+            >
+              {node.collapsed ? countBelow(id) : "−"}
+            </button>
+          )}
+          {!READ_ONLY && (
+            <button
+              className="tool tool-hover"
+              aria-label="하위 항목 추가"
+              onClick={() => setEditingId(actions.addChild(id))}
+            >
+              +
+            </button>
+          )}
+        </div>
       </div>
     );
     if (node.collapsed) return [row];
