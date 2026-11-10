@@ -356,8 +356,8 @@ button {
 
 .sidebar-caret {
   flex: none;
-  width: 14px;
-  font-size: 13px;
+  width: 15px;
+  font-size: 14px;
   color: var(--text-faint);
 }
 
