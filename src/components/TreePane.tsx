@@ -97,7 +97,7 @@ export function TreePane({ topic, actions, editingId, setEditingId, onRemove, on
   /** 배경을 눌러 선택 표시를 숨긴 항목. 다른 항목이 선택되면 저절로 풀린다. */
   const [hiddenSelection, setHiddenSelection] = useState<string | null>(null);
   const selectionHidden = hiddenSelection === topic.selectedId;
-  const outline = (topic.view ?? "outline") === "outline";
+  const outline = (topic.view ?? "tree") === "outline";
 
   const focusPane = () => paneRef.current?.focus({ preventScroll: true });
 
@@ -683,28 +683,6 @@ export function TreePane({ topic, actions, editingId, setEditingId, onRemove, on
       <div className="tree-controls">
         <div className="view-toggle" role="group" aria-label="보기 방식">
           <button
-            className={outline ? "active" : ""}
-            aria-label="목록 보기"
-            title="목록 보기"
-            aria-pressed={outline}
-            onClick={() => actions.setView("outline")}
-          >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 16 16"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.3"
-              strokeLinecap="round"
-            >
-              <path d="M5.5 3.5h9M8 8h6.5M8 12.5h6.5" />
-              <circle cx="2.5" cy="3.5" r="0.9" fill="currentColor" stroke="none" />
-              <circle cx="5" cy="8" r="0.9" fill="currentColor" stroke="none" />
-              <circle cx="5" cy="12.5" r="0.9" fill="currentColor" stroke="none" />
-            </svg>
-          </button>
-          <button
             className={outline ? "" : "active"}
             aria-label="트리 보기"
             title="트리 보기"
@@ -724,6 +702,28 @@ export function TreePane({ topic, actions, editingId, setEditingId, onRemove, on
               <rect x="10" y="2" width="4.5" height="3.2" rx="1" />
               <rect x="10" y="10.8" width="4.5" height="3.2" rx="1" />
               <path d="M6 8h1.8M7.8 3.6V12.4M7.8 3.6H10M7.8 12.4H10" />
+            </svg>
+          </button>
+          <button
+            className={outline ? "active" : ""}
+            aria-label="목록 보기"
+            title="목록 보기"
+            aria-pressed={outline}
+            onClick={() => actions.setView("outline")}
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 16 16"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.3"
+              strokeLinecap="round"
+            >
+              <path d="M5.5 3.5h9M8 8h6.5M8 12.5h6.5" />
+              <circle cx="2.5" cy="3.5" r="0.9" fill="currentColor" stroke="none" />
+              <circle cx="5" cy="8" r="0.9" fill="currentColor" stroke="none" />
+              <circle cx="5" cy="12.5" r="0.9" fill="currentColor" stroke="none" />
             </svg>
           </button>
         </div>
