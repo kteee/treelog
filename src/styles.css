@@ -1016,10 +1016,6 @@ button {
   padding: 4px 16px 48px;
 }
 
-.outline-list {
-  max-width: 560px;
-}
-
 .outline-row {
   position: relative;
   display: flex;
