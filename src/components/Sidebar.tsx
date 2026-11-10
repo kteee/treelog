@@ -275,7 +275,9 @@ export function Sidebar({
   return (
     <aside className="sidebar">
       <div className="sidebar-head">
-        <span>주제</span>
+        <button aria-label="사이드바 접기" title="사이드바 접기" onClick={onCollapse}>
+          «
+        </button>
         <div className="sidebar-actions">
           {!READ_ONLY && (
             <>
@@ -308,9 +310,6 @@ export function Sidebar({
               </button>
             </>
           )}
-          <button aria-label="사이드바 접기" title="사이드바 접기" onClick={onCollapse}>
-            «
-          </button>
         </div>
       </div>
       <button className={`sidebar-all ${activeId === null ? "current" : ""}`} onClick={onAllDocs}>

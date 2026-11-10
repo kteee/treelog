@@ -219,7 +219,7 @@ button {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 10px 6px 16px;
+  padding: 14px 10px 6px;
   font-size: 12px;
   font-weight: 600;
   color: var(--text-soft);
