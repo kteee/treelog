@@ -518,7 +518,7 @@ export function TreePane({
                 title={node.collapsed ? "펼치기" : "접기"}
                 onClick={() => actions.toggleCollapsed(id)}
               >
-                {node.collapsed ? countBelow(id) : "−"}
+                {node.collapsed ? countBelow(id) : <FoldIcon />}
               </button>
             )}
             {!READ_ONLY && (
@@ -650,7 +650,7 @@ export function TreePane({
               title={node.collapsed ? "펼치기" : "접기"}
               onClick={() => actions.toggleCollapsed(id)}
             >
-              {node.collapsed ? countBelow(id) : "−"}
+              {node.collapsed ? countBelow(id) : <FoldIcon />}
             </button>
           )}
           {!READ_ONLY && (
@@ -888,5 +888,23 @@ function NodeInput({ initial, fill, onCommit, onCommitAndAddChild, onCancel }: N
         }
       }}
     />
+  );
+}
+
+/** 접기 버튼의 화살표. 트리에서는 부모 쪽을, 목록에서는 위를 가리키게 CSS로 돌린다. */
+function FoldIcon() {
+  return (
+    <svg
+      width="11"
+      height="11"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M10 3.5 5.5 8l4.5 4.5" />
+    </svg>
   );
 }

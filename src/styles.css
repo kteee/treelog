@@ -1330,6 +1330,20 @@ button {
   line-height: 15px;
 }
 
+.tool-fold svg {
+  display: block;
+  margin: auto;
+}
+
+/* 왼쪽 가지는 부모가 오른쪽에 있으니 화살표를 뒤집고, 목록에서는 위를 가리킨다. */
+.node-left .tool-fold svg {
+  transform: rotate(180deg);
+}
+
+.outline-tools .tool-fold svg {
+  transform: rotate(90deg);
+}
+
 /* 접힌 항목은 숨은 하위 항목 수를 늘 보여 준다. */
 .tool-fold.folded {
   display: block;
