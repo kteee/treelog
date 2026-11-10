@@ -139,6 +139,7 @@ export function App() {
             setEditingId={setEditingId}
             onRemove={remove}
             onOpenDoc={openDoc}
+            groupName={workspace.groups.find((g) => g.id === topic.groupId)?.name}
           />
         </div>
         <div className="divider" onPointerDown={startResize} />

@@ -33,6 +33,8 @@ interface Props {
   setEditingId: (id: string | null) => void;
   onRemove: (id: string) => void;
   onOpenDoc: () => void;
+  /** 주제가 속한 사이드바 그룹 이름. 그룹 밖이면 없다. */
+  groupName?: string;
 }
 
 interface View {
@@ -84,7 +86,15 @@ const DROP_EDGE = 0.35;
 const DROP_REACH = 24;
 const clampScale = (s: number) => Math.min(MAX_SCALE, Math.max(MIN_SCALE, s));
 
-export function TreePane({ topic, actions, editingId, setEditingId, onRemove, onOpenDoc }: Props) {
+export function TreePane({
+  topic,
+  actions,
+  editingId,
+  setEditingId,
+  onRemove,
+  onOpenDoc,
+  groupName,
+}: Props) {
   const paneRef = useRef<HTMLDivElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -644,8 +654,15 @@ export function TreePane({ topic, actions, editingId, setEditingId, onRemove, on
           </div>
         </div>
       )}
-      {/* 목록 보기는 맨 위 주제 줄이 이 자리에 와서 주제명을 대신한다. */}
-      {!outline && <div className="tree-title">{root.title || "제목 없음"}</div>}
+      <div className="tree-title">
+        {groupName !== undefined && (
+          <>
+            <span className="tree-title-group">{groupName || "이름 없는 그룹"}</span>
+            <span className="tree-title-sep">/</span>
+          </>
+        )}
+        {root.title || "제목 없음"}
+      </div>
       {!READ_ONLY && (
         <div className="shortcut-help">
           <button
