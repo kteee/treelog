@@ -11,6 +11,8 @@ export interface Backup {
   docs: Record<string, unknown[]>;
 }
 
+// 이름을 트리로그로 바꿨지만 저장소 이름과 백업 표시는 그대로 둔다.
+// 바꾸면 이미 저장된 노트와 예전 백업 파일을 읽을 수 없게 된다.
 const store = createStore("logic-note", "kv");
 const WORKSPACE_KEY = "workspace";
 const DOC_PREFIX = "doc:";

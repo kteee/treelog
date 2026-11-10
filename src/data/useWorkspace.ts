@@ -223,7 +223,7 @@ export function useWorkspace(onSaveError: () => void) {
         );
         const a = document.createElement("a");
         a.href = url;
-        a.download = `logic-note-backup-${new Date().toISOString().slice(0, 10)}.json`;
+        a.download = `treelog-backup-${new Date().toISOString().slice(0, 10)}.json`;
         a.click();
         URL.revokeObjectURL(url);
       },

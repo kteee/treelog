@@ -644,7 +644,8 @@ export function TreePane({ topic, actions, editingId, setEditingId, onRemove, on
           </div>
         </div>
       )}
-      <div className="tree-title">{root.title || "제목 없음"}</div>
+      {/* 목록 보기는 맨 위 주제 줄이 이 자리에 와서 주제명을 대신한다. */}
+      {!outline && <div className="tree-title">{root.title || "제목 없음"}</div>}
       {!READ_ONLY && (
         <div className="shortcut-help">
           <button

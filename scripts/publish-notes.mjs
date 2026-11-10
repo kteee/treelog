@@ -10,11 +10,11 @@ const target = resolve("public", "notes.json");
 function newestBackup() {
   const dir = join(homedir(), "Downloads");
   const files = readdirSync(dir)
-    .filter((f) => /^logic-note-backup-.*\.json$/.test(f))
+    .filter((f) => /^(treelog|logic-note)-backup-.*\.json$/.test(f))
     .map((f) => join(dir, f))
     .sort((a, b) => statSync(b).mtimeMs - statSync(a).mtimeMs);
   if (files.length === 0) {
-    throw new Error(`${dir}에 logic-note-backup-*.json 파일이 없어요. 앱에서 '백업 내보내기'를 먼저 해 주세요.`);
+    throw new Error(`${dir}에 treelog-backup-*.json 파일이 없어요. 앱에서 '백업 내보내기'를 먼저 해 주세요.`);
   }
   return files[0];
 }
@@ -22,8 +22,9 @@ function newestBackup() {
 const source = process.argv[2] ? resolve(process.argv[2]) : newestBackup();
 const backup = JSON.parse(readFileSync(source, "utf8"));
 const topics = backup?.workspace?.topics;
+// 백업 안의 앱 표시는 예전 이름(logic-note) 그대로다.
 if (backup?.app !== "logic-note" || !Array.isArray(topics) || topics.length === 0) {
-  throw new Error(`${source}는 로직트리 노트 백업 파일이 아니에요.`);
+  throw new Error(`${source}는 트리로그 백업 파일이 아니에요.`);
 }
 
 mkdirSync("public", { recursive: true });
