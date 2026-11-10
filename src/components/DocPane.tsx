@@ -10,9 +10,12 @@ interface Props {
   topic: Topic;
   actions: WorkspaceActions;
   onError: (message: string) => void;
+  /** 새 주제를 만들었을 때처럼 이 항목의 제목을 바로 고치기 시작할 항목 */
+  editTitleId?: string | null;
+  onTitleEditStarted?: () => void;
 }
 
-export function DocPane({ topic, actions, onError }: Props) {
+export function DocPane({ topic, actions, onError, editTitleId, onTitleEditStarted }: Props) {
   const handle: EditorHandle = useRef(null);
   const node = topic.nodes[topic.selectedId];
 
@@ -42,9 +45,17 @@ export function DocPane({ topic, actions, onError }: Props) {
           value={node.title}
           onChange={(title) => actions.renameLive(node.id, title)}
           onEnter={() => handle.current?.focus()}
+          startEditing={editTitleId === node.id}
+          onEditStarted={onTitleEditStarted}
         />
         <NodeLinkContext.Provider value={links}>
-          <DocEditor key={node.id} nodeId={node.id} handle={handle} onError={onError} />
+          <DocEditor
+            key={node.id}
+            nodeId={node.id}
+            handle={handle}
+            onError={onError}
+            onSaved={actions.touch}
+          />
         </NodeLinkContext.Provider>
         {node.children.length > 0 && (
           <nav className="doc-children" aria-label="하위 항목">
@@ -71,8 +82,19 @@ interface TitleProps {
 }
 
 /** 평소엔 한 줄로 줄여 보여주고, 고칠 때만 전체를 펼친다. */
-function DocTitle(props: TitleProps) {
+function DocTitle({
+  startEditing,
+  onEditStarted,
+  ...props
+}: TitleProps & { startEditing?: boolean; onEditStarted?: () => void }) {
   const [editing, setEditing] = useState(false);
+
+  useEffect(() => {
+    if (!startEditing || READ_ONLY) return;
+    setEditing(true);
+    onEditStarted?.();
+  }, [startEditing, onEditStarted]);
+
   if (READ_ONLY) {
     return (
       <div

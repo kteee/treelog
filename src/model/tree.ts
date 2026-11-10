@@ -11,6 +11,8 @@ export interface TreeNode {
   width?: number;
   /** 하위 항목을 접어 두었는지. 하위 항목이 없으면 의미가 없다. */
   collapsed?: boolean;
+  /** 제목이나 문서를 마지막으로 고친 시각(ms). 예전 데이터에는 없다. */
+  updatedAt?: number;
 }
 
 export interface Topic {
@@ -96,6 +98,13 @@ export function renameNode(topic: Topic, id: string, title: string): Topic {
   const node = topic.nodes[id];
   if (!node || node.title === title) return topic;
   return { ...topic, nodes: patch(topic, { ...node, title }) };
+}
+
+/** 제목이나 문서를 고친 시각을 남긴다. '모든 문서'의 최근 수정순 정렬에 쓴다. */
+export function touchNode(topic: Topic, id: string, time: number): Topic {
+  const node = topic.nodes[id];
+  if (!node) return topic;
+  return { ...topic, nodes: patch(topic, { ...node, updatedAt: time }) };
 }
 
 const NODE_MIN_WIDTH = 60;

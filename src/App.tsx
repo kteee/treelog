@@ -1,6 +1,13 @@
-import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
 import { useWorkspace } from "./data/useWorkspace";
 import { READ_ONLY } from "./config";
+import { AllDocs } from "./components/AllDocs";
 import { DocPane } from "./components/DocPane";
 import { Sidebar } from "./components/Sidebar";
 import { TreePane } from "./components/TreePane";
@@ -38,7 +45,30 @@ export function App() {
   const [docOpen, setDocOpen] = useState(true);
   const [resizing, setResizing] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(loadSidebarOpen);
+  /** '모든 문서' 화면을 보는 중인지 */
+  const [allDocs, setAllDocs] = useState(false);
+  const [searchFocus, setSearchFocus] = useState(0);
+  /** 새 주제를 만들면 문서 제목부터 바로 고치게 한다 */
+  const [titleEditId, setTitleEditId] = useState<string | null>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
+
+  const openAllDocs = useCallback(() => {
+    setAllDocs(true);
+    setSearchFocus((n) => n + 1);
+  }, []);
+  const clearTitleEdit = useCallback(() => setTitleEditId(null), []);
+
+  // 어디서든 Ctrl+K(맥은 Cmd+K)로 검색을 연다.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        openAllDocs();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [openAllDocs]);
 
   const openDoc = useCallback(() => setDocOpen(true), []);
   const closeDoc = useCallback(() => setDocOpen(false), []);
@@ -55,9 +85,23 @@ export function App() {
     return () => window.clearTimeout(timer);
   }, [toast]);
 
-  if (loadFailed) return <div className="load-failed">노트를 불러오지 못했어요. 잠시 뒤 새로고침해 주세요.</div>;
+  if (loadFailed)
+    return <div className="load-failed">노트를 불러오지 못했어요. 잠시 뒤 새로고침해 주세요.</div>;
   if (!workspace || !topic) return null;
-  const wide = docOpen && (topic.docWide ?? false);
+  // 하위 항목이 없는 주제는 문서 한 장이라 트리 칸 없이 문서만 넓게 보여 준다.
+  const single = topic.nodes[topic.rootId].children.length === 0;
+  const wide = docOpen && (single || (topic.docWide ?? false));
+
+  const createdTopic = (rootId: string) => {
+    setAllDocs(false);
+    setDocOpen(true);
+    setTitleEditId(rootId);
+  };
+
+  const growTree = () => {
+    actions.setDocWide(false);
+    setEditingId(actions.addChild(topic.rootId));
+  };
 
   const changeSidebar = (open: boolean) => {
     setSidebarOpen(open);
@@ -111,14 +155,29 @@ export function App() {
           topics={workspace.topics}
           groups={workspace.groups}
           ungroupedCollapsed={workspace.ungroupedCollapsed ?? false}
-          active={topic}
+          activeId={allDocs ? null : topic.id}
           actions={actions}
-          onCreated={setEditingId}
+          onCreated={createdTopic}
+          onTopicOpen={() => setAllDocs(false)}
+          onAllDocs={openAllDocs}
           onError={showError}
           onCollapse={() => changeSidebar(false)}
         />
       )}
+      {allDocs && (
+        <AllDocs
+          workspace={workspace}
+          focusKey={searchFocus}
+          onClose={() => setAllDocs(false)}
+          onOpen={(topicId, nodeId) => {
+            actions.openNode(topicId, nodeId);
+            setAllDocs(false);
+            setDocOpen(true);
+          }}
+        />
+      )}
       <div
+        hidden={allDocs}
         className={`app-body ${docOpen ? "" : "doc-closed"} ${wide ? "doc-wide" : ""} ${resizing ? "resizing" : ""}`}
         ref={bodyRef}
       >
@@ -128,7 +187,11 @@ export function App() {
           inert={wide}
         >
           {!sidebarOpen && (
-            <button className="sidebar-open" aria-label="사이드바 펼치기" onClick={() => changeSidebar(true)}>
+            <button
+              className="sidebar-open"
+              aria-label="사이드바 펼치기"
+              onClick={() => changeSidebar(true)}
+            >
               »
             </button>
           )}
@@ -149,13 +212,32 @@ export function App() {
               삭제
             </button>
           )}
+          {single && !READ_ONLY && (
+            <button
+              className="doc-grow"
+              onClick={growTree}
+              title="하위 항목을 만들어 트리로 정리해요"
+            >
+              트리로 펼치기
+            </button>
+          )}
           <button
             className="doc-wide-toggle"
+            hidden={single}
             aria-label={wide ? "트리와 같이 보기" : "문서 넓게 보기"}
             title={wide ? "트리와 같이 보기" : "문서 넓게 보기"}
             onClick={() => actions.setDocWide(!wide)}
           >
-            <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 16 16"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.4"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               {wide ? (
                 <path d="M13.5 6.5h-4v-4M2.5 9.5h4v4M9.5 6.5l4-4M6.5 9.5l-4 4" />
               ) : (
@@ -166,7 +248,13 @@ export function App() {
           <button className="doc-close" aria-label="문서 닫기" onClick={closeDoc}>
             ×
           </button>
-          <DocPane topic={topic} actions={actions} onError={showError} />
+          <DocPane
+            topic={topic}
+            actions={actions}
+            onError={showError}
+            editTitleId={titleEditId}
+            onTitleEditStarted={clearTitleEdit}
+          />
         </div>
       </div>
       {toast && (

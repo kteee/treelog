@@ -8,9 +8,13 @@ interface Props {
   topics: Topic[];
   groups: Group[];
   ungroupedCollapsed: boolean;
-  active: Topic;
+  /** 지금 열린 주제. '모든 문서'를 보는 중이면 null */
+  activeId: string | null;
   actions: WorkspaceActions;
   onCreated: (rootId: string) => void;
+  /** 주제를 골랐을 때('모든 문서'에서 주제 화면으로 돌아간다) */
+  onTopicOpen: () => void;
+  onAllDocs: () => void;
   onError: (message: string) => void;
   onCollapse: () => void;
 }
@@ -39,7 +43,9 @@ export function Sidebar({
   topics,
   groups,
   ungroupedCollapsed,
-  active,
+  activeId,
+  onTopicOpen,
+  onAllDocs,
   actions,
   onCreated,
   onError,
@@ -161,16 +167,20 @@ export function Sidebar({
   const renderTopic = (t: Topic) => (
     <div
       key={t.id}
-      className={`sidebar-row ${t.id === active.id ? "current" : ""} ${showUngroupedHead ? "in-group" : ""} ${markClass(`topic:${t.id}`)}`}
+      className={`sidebar-row ${t.id === activeId ? "current" : ""} ${showUngroupedHead ? "in-group" : ""} ${markClass(`topic:${t.id}`)}`}
       data-topic-id={t.id}
       data-topic-group={t.groupId ?? ""}
     >
       <button
         className="sidebar-topic"
         onPointerDown={(e) => startDrag(e, { kind: "topic", id: t.id, title: titleOf(t) })}
-        onClick={unlessDragged(() => actions.switchTopic(t.id))}
+        onClick={unlessDragged(() => {
+          actions.switchTopic(t.id);
+          onTopicOpen();
+        })}
       >
-        {titleOf(t)}
+        <TopicIcon single={t.nodes[t.rootId].children.length === 0} />
+        <span className="sidebar-topic-name">{titleOf(t)}</span>
       </button>
       {!READ_ONLY && (
         <button
@@ -303,6 +313,22 @@ export function Sidebar({
           </button>
         </div>
       </div>
+      <button className={`sidebar-all ${activeId === null ? "current" : ""}`} onClick={onAllDocs}>
+        <svg
+          width="15"
+          height="15"
+          viewBox="0 0 16 16"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.4"
+          strokeLinecap="round"
+        >
+          <circle cx="7" cy="7" r="4.5" />
+          <path d="M10.5 10.5 14 14" />
+        </svg>
+        <span>모든 문서</span>
+        <kbd>Ctrl K</kbd>
+      </button>
       <nav className="sidebar-list">
         <div data-ungrouped>
           {showUngroupedHead && (
@@ -406,5 +432,37 @@ function GroupNameInput({
         }
       }}
     />
+  );
+}
+
+/** 하위 항목이 없는 주제는 문서 한 장, 있으면 트리로 보여 준다. */
+function TopicIcon({ single }: { single: boolean }) {
+  return (
+    <svg
+      className="sidebar-topic-icon"
+      width="14"
+      height="14"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.3"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-label={single ? "문서" : "트리"}
+    >
+      {single ? (
+        <>
+          <path d="M4 1.75h5.5L12.5 4.75v9.5H4z" />
+          <path d="M9.5 1.75v3h3M6 8h4.5M6 10.75h4.5" />
+        </>
+      ) : (
+        <>
+          <rect x="1.5" y="6" width="4.5" height="4" rx="1.2" />
+          <rect x="10" y="2" width="4.5" height="3.2" rx="1" />
+          <rect x="10" y="10.8" width="4.5" height="3.2" rx="1" />
+          <path d="M6 8h1.8M7.8 3.6V12.4M7.8 3.6H10M7.8 12.4H10" />
+        </>
+      )}
+    </svg>
   );
 }

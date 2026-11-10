@@ -37,6 +37,16 @@ export const loadDoc = (nodeId: string) =>
 export const saveDoc = (nodeId: string, blocks: unknown[]) =>
   set(DOC_PREFIX + nodeId, blocks, store);
 
+/** 검색에 쓰려고 모든 문서를 항목 id별로 읽는다. */
+export async function loadAllDocs(): Promise<Record<string, unknown[]>> {
+  if (READ_ONLY) return published?.docs ?? {};
+  const docs: Record<string, unknown[]> = {};
+  for (const [key, value] of await entries<string, unknown[]>(store)) {
+    if (key.startsWith(DOC_PREFIX)) docs[key.slice(DOC_PREFIX.length)] = value;
+  }
+  return docs;
+}
+
 /**
  * 트리에서 지워진 항목의 문서를 정리한다.
  * 실행 취소로 되살릴 수 있도록 삭제 시점이 아니라 다음 시작 때 호출한다.

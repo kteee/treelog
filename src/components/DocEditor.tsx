@@ -16,6 +16,8 @@ interface Props {
   nodeId: string;
   handle: EditorHandle;
   onError: (message: string) => void;
+  /** 문서를 저장한 뒤 부른다. 고친 시각을 남기는 데 쓴다. */
+  onSaved: (nodeId: string) => void;
 }
 
 function readAsDataUrl(file: File): Promise<string> {
@@ -30,7 +32,7 @@ function readAsDataUrl(file: File): Promise<string> {
   });
 }
 
-export function DocEditor({ nodeId, handle, onError }: Props) {
+export function DocEditor({ nodeId, handle, onError, onSaved }: Props) {
   const [initial, setInitial] = useState<unknown[] | null | undefined>(undefined);
 
   useEffect(() => {
@@ -46,14 +48,22 @@ export function DocEditor({ nodeId, handle, onError }: Props) {
   }, [nodeId, onError]);
 
   if (initial === undefined) return null;
-  return <LoadedEditor nodeId={nodeId} initial={initial} handle={handle} onError={onError} />;
+  return (
+    <LoadedEditor
+      nodeId={nodeId}
+      initial={initial}
+      handle={handle}
+      onError={onError}
+      onSaved={onSaved}
+    />
+  );
 }
 
 interface LoadedProps extends Props {
   initial: unknown[] | null;
 }
 
-function LoadedEditor({ nodeId, initial, handle, onError }: LoadedProps) {
+function LoadedEditor({ nodeId, initial, handle, onError, onSaved }: LoadedProps) {
   const { targets } = useContext(NodeLinkContext);
   const editor = useCreateBlockNote({
     schema: docSchema,
@@ -87,9 +97,9 @@ function LoadedEditor({ nodeId, initial, handle, onError }: LoadedProps) {
       const blocks = pending.current;
       if (!blocks) return;
       pending.current = null;
-      saveDoc(nodeId, blocks).catch(() =>
-        onError("문서를 저장하지 못했어요. 저장 공간을 확인해 주세요."),
-      );
+      saveDoc(nodeId, blocks)
+        .then(() => onSaved(nodeId))
+        .catch(() => onError("문서를 저장하지 못했어요. 저장 공간을 확인해 주세요."));
     };
     const onHide = () => {
       if (document.visibilityState === "hidden") flush();
@@ -102,7 +112,7 @@ function LoadedEditor({ nodeId, initial, handle, onError }: LoadedProps) {
       window.removeEventListener("pagehide", flush);
       flush();
     };
-  }, [nodeId, onError]);
+  }, [nodeId, onError, onSaved]);
 
   return (
     <BlockNoteView

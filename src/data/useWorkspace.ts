@@ -115,6 +115,13 @@ export function useWorkspace(onSaveError: () => void) {
       commit({ ...w, topics: w.topics.map((t) => (t.id === w.activeId ? { ...t, ...change } : t)) });
     };
 
+    /** 제목이 실제로 바뀌었을 때만 고친 시각을 남긴다. */
+    const renamed = (id: string, title: string) => {
+      const before = active();
+      const next = tree.renameNode(before, id, title);
+      return next === before ? before : tree.touchNode(next, id, Date.now());
+    };
+
     const apply = (next: Topic, historyKey?: string | false) => {
       const before = active();
       if (next === before) return;
@@ -133,10 +140,24 @@ export function useWorkspace(onSaveError: () => void) {
       select: (id: string) => apply(tree.selectNode(active(), id), false),
       /** 접기는 보는 방식이라 실행 취소 기록에 넣지 않는다. */
       toggleCollapsed: (id: string) => apply(tree.toggleCollapsed(active(), id), false),
-      rename: (id: string, title: string) => apply(tree.renameNode(active(), id, title)),
+      rename: (id: string, title: string) => apply(renamed(id, title)),
       /** 문서 제목처럼 글자마다 바뀌는 입력은 실행 취소 한 번으로 묶는다. */
-      renameLive: (id: string, title: string) =>
-        apply(tree.renameNode(active(), id, title), `title:${id}`),
+      renameLive: (id: string, title: string) => apply(renamed(id, title), `title:${id}`),
+      /** 문서를 저장했을 때 고친 시각을 남긴다. 주제를 옮긴 뒤에 저장될 수도 있어서 항목으로 주제를 찾는다. */
+      touch: (id: string) => {
+        const w = current.current!;
+        const owner = w.topics.find((t) => t.nodes[id]);
+        if (!owner) return;
+        const next = tree.touchNode(owner, id, Date.now());
+        commit({ ...w, topics: w.topics.map((t) => (t.id === owner.id ? next : t)) });
+      },
+      /** '모든 문서'에서 고른 항목으로 바로 간다. */
+      openNode: (topicId: string, nodeId: string) => {
+        lastHistoryKey.current = null;
+        const w = current.current!;
+        commit({ ...w, activeId: topicId });
+        apply(tree.selectNode(active(), nodeId), false);
+      },
       resize: (id: string, width?: number) => apply(tree.resizeNode(active(), id, width)),
       addChild: (parentId: string, side?: Side) => {
         const r = tree.addChild(active(), parentId, side);
