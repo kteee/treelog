@@ -17,7 +17,7 @@ export interface Topic {
   selectedId: string;
   /** 사이드바 그룹. 없으면 그룹 밖이다. */
   groupId?: string;
-  /** 왼쪽 칸을 로직트리로 볼지 목록으로 볼지. 없으면 로직트리다. */
+  /** 왼쪽 칸을 목록으로 볼지 트리로 볼지. 없으면 목록이다. */
   view?: TopicView;
   /** 트리를 숨기고 문서를 화면 전체로 볼지. */
   docWide?: boolean;
