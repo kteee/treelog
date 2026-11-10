@@ -30,7 +30,7 @@ body {
   font-family: var(--font);
   color: var(--text);
   background: var(--bg);
-  font-size: 14px;
+  font-size: 16px;
 }
 
 button,
@@ -1151,7 +1151,7 @@ button {
 
 .bn-editor {
   font-family: var(--font);
-  font-size: 15px;
+  font-size: 16px;
 }
 
 /* 본문 */
