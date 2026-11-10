@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from "react";
-import type { Topic } from "../model/tree";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { outlineOrder, type Topic } from "../model/tree";
+import { NodeLinkContext } from "./NodeLink";
 import type { WorkspaceActions } from "../data/useWorkspace";
 import { DocEditor, type EditorHandle } from "./DocEditor";
 import { useAutoHeight } from "./useAutoHeight";
@@ -15,6 +16,24 @@ export function DocPane({ topic, actions, onError }: Props) {
   const handle: EditorHandle = useRef(null);
   const node = topic.nodes[topic.selectedId];
 
+  const links = useMemo(
+    () => ({
+      titleOf: (id: string) => topic.nodes[id]?.title ?? null,
+      open: (id: string) => actions.select(id),
+      targets: outlineOrder(topic)
+        .filter((id) => id !== node.id)
+        .map((id) => {
+          const parent = topic.nodes[id].parent;
+          return {
+            id,
+            title: topic.nodes[id].title || "제목 없음",
+            parentTitle: parent ? topic.nodes[parent].title || "제목 없음" : undefined,
+          };
+        }),
+    }),
+    [topic, actions, node.id],
+  );
+
   return (
     <div className="doc-pane">
       <div className="doc-column">
@@ -24,7 +43,22 @@ export function DocPane({ topic, actions, onError }: Props) {
           onChange={(title) => actions.renameLive(node.id, title)}
           onEnter={() => handle.current?.focus()}
         />
-        <DocEditor key={node.id} nodeId={node.id} handle={handle} onError={onError} />
+        <NodeLinkContext.Provider value={links}>
+          <DocEditor key={node.id} nodeId={node.id} handle={handle} onError={onError} />
+        </NodeLinkContext.Provider>
+        {node.children.length > 0 && (
+          <nav className="doc-children" aria-label="하위 항목">
+            <div className="doc-children-title">하위 항목</div>
+            {node.children.map((id) => (
+              <button key={id} className="doc-child" onClick={() => actions.select(id)}>
+                <span className="doc-child-arrow">›</span>
+                <span className={topic.nodes[id].title ? "" : "untitled"}>
+                  {topic.nodes[id].title || "제목 없음"}
+                </span>
+              </button>
+            ))}
+          </nav>
+        )}
       </div>
     </div>
   );

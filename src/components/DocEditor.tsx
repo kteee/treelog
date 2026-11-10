@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState, type RefObject } from "react";
-import type { BlockNoteEditor, PartialBlock } from "@blocknote/core";
+import { useContext, useEffect, useRef, useState, type RefObject } from "react";
+import { filterSuggestionItems, type BlockNoteEditor, type PartialBlock } from "@blocknote/core";
 import { ko } from "@blocknote/core/locales";
-import { useCreateBlockNote } from "@blocknote/react";
+import { SuggestionMenuController, useCreateBlockNote } from "@blocknote/react";
 import { BlockNoteView } from "@blocknote/mantine";
 import { loadDoc, saveDoc } from "../data/db";
 import { READ_ONLY } from "../config";
+import { docSchema, NodeLinkContext } from "./NodeLink";
 
 const SAVE_DELAY = 400;
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
@@ -53,8 +54,16 @@ interface LoadedProps extends Props {
 }
 
 function LoadedEditor({ nodeId, initial, handle, onError }: LoadedProps) {
+  const { targets } = useContext(NodeLinkContext);
   const editor = useCreateBlockNote({
-    initialContent: initial?.length ? (initial as PartialBlock[]) : undefined,
+    schema: docSchema,
+    initialContent: initial?.length
+      ? (initial as PartialBlock<
+          typeof docSchema.blockSchema,
+          typeof docSchema.inlineContentSchema,
+          typeof docSchema.styleSchema
+        >[])
+      : undefined,
     dictionary: {
       ...ko,
       placeholders: { ...ko.placeholders, default: "내용을 입력하거나 / 를 눌러 블록을 고르세요" },
@@ -78,7 +87,9 @@ function LoadedEditor({ nodeId, initial, handle, onError }: LoadedProps) {
       const blocks = pending.current;
       if (!blocks) return;
       pending.current = null;
-      saveDoc(nodeId, blocks).catch(() => onError("문서를 저장하지 못했어요. 저장 공간을 확인해 주세요."));
+      saveDoc(nodeId, blocks).catch(() =>
+        onError("문서를 저장하지 못했어요. 저장 공간을 확인해 주세요."),
+      );
     };
     const onHide = () => {
       if (document.visibilityState === "hidden") flush();
@@ -103,6 +114,22 @@ function LoadedEditor({ nodeId, initial, handle, onError }: LoadedProps) {
         window.clearTimeout(timer.current);
         timer.current = window.setTimeout(() => flushRef.current(), SAVE_DELAY);
       }}
-    />
+    >
+      {/* '@'를 치면 같은 주제의 다른 항목을 골라 링크로 넣는다. */}
+      <SuggestionMenuController
+        triggerCharacter="@"
+        getItems={async (query) =>
+          filterSuggestionItems(
+            targets.map((t) => ({
+              title: t.title,
+              subtext: t.parentTitle,
+              onItemClick: () =>
+                editor.insertInlineContent([{ type: "nodeLink", props: { nodeId: t.id } }, " "]),
+            })),
+            query,
+          )
+        }
+      />
+    </BlockNoteView>
   );
 }

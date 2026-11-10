@@ -1254,3 +1254,59 @@ button {
   font-size: 14px;
   color: var(--text-soft);
 }
+
+/* 문서 안 항목 링크(@) */
+.node-link {
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-weight: 500;
+  color: var(--accent);
+  background: var(--accent-soft);
+  cursor: pointer;
+}
+
+.node-link:hover {
+  text-decoration: underline;
+}
+
+.node-link.missing {
+  color: var(--text-faint);
+  background: var(--bg-soft);
+  text-decoration: line-through;
+  cursor: default;
+}
+
+/* 문서 아래 하위 항목 목록 */
+.doc-children {
+  margin: 40px 54px 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.doc-children-title {
+  margin-bottom: 6px;
+  padding: 0 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-soft);
+}
+
+.doc-child {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  width: 100%;
+  padding: 5px 8px;
+  border-radius: 6px;
+  font-size: 14px;
+  text-align: left;
+  color: var(--text);
+}
+
+.doc-child:hover {
+  background: var(--hover);
+}
+
+.doc-child-arrow {
+  color: var(--text-faint);
+}
