@@ -205,9 +205,10 @@ button {
 }
 
 /* 사이드바 */
+/* 큰 화면에서는 화면 폭에 맞춰 300px까지 넓어진다. */
 .sidebar {
   flex: none;
-  width: 220px;
+  width: clamp(220px, 15vw, 300px);
   display: flex;
   flex-direction: column;
   background: var(--bg-soft);
@@ -1101,8 +1102,9 @@ button {
   overflow-y: auto;
 }
 
+/* 칸이 넓어지면 글 폭도 같이 넓어지되, 한 줄이 너무 길어지지 않게 1200px에서 멈춘다. */
 .doc-column {
-  max-width: 760px;
+  max-width: clamp(760px, 80%, 1200px);
   margin: 0 auto;
   padding: 70px 0 160px;
 }
