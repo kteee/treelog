@@ -131,6 +131,8 @@ export function useWorkspace(onSaveError: () => void) {
 
     return {
       select: (id: string) => apply(tree.selectNode(active(), id), false),
+      /** 접기는 보는 방식이라 실행 취소 기록에 넣지 않는다. */
+      toggleCollapsed: (id: string) => apply(tree.toggleCollapsed(active(), id), false),
       rename: (id: string, title: string) => apply(tree.renameNode(active(), id, title)),
       /** 문서 제목처럼 글자마다 바뀌는 입력은 실행 취소 한 번으로 묶는다. */
       renameLive: (id: string, title: string) =>
@@ -154,8 +156,15 @@ export function useWorkspace(onSaveError: () => void) {
         const snapshot = history.current.get(topic.id)?.pop();
         if (!snapshot) return;
         // 실행 취소는 주제 안의 내용만 되돌리고, 그사이 바꾼 그룹과 보기 설정은 그대로 둔다.
+        // 접힘 상태도 지금 모습 그대로 둔다.
+        const nodes = { ...snapshot.nodes };
+        for (const [id, node] of Object.entries(nodes)) {
+          const now = topic.nodes[id];
+          if (now && now.collapsed !== node.collapsed) nodes[id] = { ...node, collapsed: now.collapsed };
+        }
         const previous = {
           ...snapshot,
+          nodes,
           groupId: topic.groupId,
           view: topic.view,
           docWide: topic.docWide,

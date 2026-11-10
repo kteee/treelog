@@ -11,6 +11,8 @@ import {
   outlineOrder,
   removeNode,
   renameNode,
+  selectNode,
+  toggleCollapsed,
   resizeNode,
   type Topic,
 } from "./tree";
@@ -255,6 +257,45 @@ describe("항목 폭", () => {
     const { topic, a, b } = sample();
     const wide = resizeNode(topic, a, 320);
     expect(moveNode(wide, a, b, "inside").nodes[a].width).toBe(320);
+  });
+});
+
+describe("접기", () => {
+  it("하위가 있는 항목만 접고 다시 펼 수 있다", () => {
+    const { topic, a, b } = sample();
+    const folded = toggleCollapsed(topic, a);
+    expect(folded.nodes[a].collapsed).toBe(true);
+    expect(toggleCollapsed(folded, a).nodes[a].collapsed).toBe(false);
+    expect(toggleCollapsed(topic, b)).toBe(topic);
+    expect(toggleCollapsed(topic, topic.rootId)).toBe(topic);
+  });
+
+  it("선택이 접히는 가지 안에 있으면 접는 항목으로 옮긴다", () => {
+    const { topic, a, a1 } = sample();
+    expect(toggleCollapsed({ ...topic, selectedId: a1 }, a).selectedId).toBe(a);
+  });
+
+  it("접힌 곳 안의 항목을 고르면 펼친다", () => {
+    const { topic, a, a1 } = sample();
+    const next = selectNode(toggleCollapsed(topic, a), a1);
+    expect(next.selectedId).toBe(a1);
+    expect(next.nodes[a].collapsed).toBe(false);
+  });
+
+  it("접힌 항목에 하위를 더하거나 안으로 옮기면 펼친다", () => {
+    const { topic, a, b } = sample();
+    const folded = toggleCollapsed(topic, a);
+    expect(addChild(folded, a).topic.nodes[a].collapsed).toBe(false);
+    expect(moveNode(folded, b, a, "inside").nodes[a].collapsed).toBe(false);
+  });
+
+  it("방향키는 접힌 하위를 건너뛴다", () => {
+    const { topic, root, a, b } = sample();
+    const folded = toggleCollapsed(topic, a);
+    expect(outlineOrder(folded, true)).toEqual([root, a, b]);
+    expect(outlineNeighbor(folded, a, "down")).toBe(b);
+    expect(outlineNeighbor(folded, a, "right")).toBe(a);
+    expect(neighbor(folded, a, "right")).toBe(a);
   });
 });
 

@@ -74,6 +74,7 @@ const SHORTCUTS: [string[], string][] = [
   [["Tab"], "하위 항목 추가"],
   [["Enter"], "다음 항목 추가"],
   [["F2", "더블클릭"], "이름 고치기"],
+  [["Space"], "접기 · 펼치기"],
   [["Shift+Enter"], "이름에 줄바꿈"],
   [["Esc"], "고치기 취소"],
   [["Del"], "삭제"],
@@ -409,7 +410,7 @@ export function TreePane({
   const onKeyDown = (e: KeyboardEvent) => {
     if ((e.target as HTMLElement).matches("input, textarea")) return;
     // 공개 빌드에서는 방향키 이동만 된다.
-    if (READ_ONLY && !e.key.startsWith("Arrow")) return;
+    if (READ_ONLY && !e.key.startsWith("Arrow") && e.key !== " ") return;
     const id = topic.selectedId;
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") {
       e.preventDefault();
@@ -430,6 +431,8 @@ export function TreePane({
         return handle(() => setEditingId(actions.addSibling(id)));
       case "F2":
         return handle(() => setEditingId(id));
+      case " ":
+        return handle(() => actions.toggleCollapsed(id));
       case "Delete":
       case "Backspace":
         return handle(() => onRemove(id));
@@ -444,11 +447,16 @@ export function TreePane({
     }
   };
 
+  /** 접었을 때 숨는 항목 수 */
+  const countBelow = (id: string): number =>
+    topic.nodes[id].children.reduce((sum, c) => sum + 1 + countBelow(c), 0);
+
   const renderNode = (id: string, depth: number, side: Side) => {
     const node = topic.nodes[id];
     const isEditing = editingId === id;
     const fromLeft = side === "left" && depth > 0;
     const width = resizing?.id === id ? resizing.width : node.width;
+    const canFold = depth > 0 && node.children.length > 0;
     const classes = [
       "node",
       depth === 0 ? "node-root" : depth === 1 ? "node-main" : "node-leaf",
@@ -501,15 +509,29 @@ export function TreePane({
             }}
           />
         )}
-        {!READ_ONLY && (
+        {(canFold || !READ_ONLY) && (
           <div className="node-tools" onPointerDown={(e) => e.stopPropagation()}>
-            <button
-              className="tool tool-hover"
-              aria-label="하위 항목 추가"
-              onClick={() => setEditingId(actions.addChild(id, depth === 0 ? "right" : undefined))}
-            >
-              +
-            </button>
+            {canFold && (
+              <button
+                className={`tool tool-fold ${node.collapsed ? "folded" : "tool-hover"}`}
+                aria-label={node.collapsed ? "펼치기" : "접기"}
+                title={node.collapsed ? "펼치기" : "접기"}
+                onClick={() => actions.toggleCollapsed(id)}
+              >
+                {node.collapsed ? countBelow(id) : "−"}
+              </button>
+            )}
+            {!READ_ONLY && (
+              <button
+                className="tool tool-hover"
+                aria-label="하위 항목 추가"
+                onClick={() =>
+                  setEditingId(actions.addChild(id, depth === 0 ? "right" : undefined))
+                }
+              >
+                +
+              </button>
+            )}
           </div>
         )}
         {depth === 0 && !READ_ONLY && (
@@ -551,7 +573,9 @@ export function TreePane({
         }
       >
         {renderNode(id, depth, side)}
-        {node.children.length > 0 && renderChildren(node.children, depth + 1, side)}
+        {node.children.length > 0 &&
+          !node.collapsed &&
+          renderChildren(node.children, depth + 1, side)}
       </div>
     );
   };
@@ -582,7 +606,19 @@ export function TreePane({
         onDoubleClick={() => !READ_ONLY && setEditingId(id)}
         onContextMenu={(e) => openMenu(e, id)}
       >
-        {depth > 0 && <span className="outline-bullet" />}
+        {depth > 0 &&
+          (node.children.length > 0 ? (
+            // 하위가 있는 항목은 점을 눌러 접고 편다. 접힌 점에는 테두리가 생긴다.
+            <button
+              className={`outline-bullet ${node.collapsed ? "folded" : ""}`}
+              aria-label={node.collapsed ? "펼치기" : "접기"}
+              title={node.collapsed ? "펼치기" : "접기"}
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={() => actions.toggleCollapsed(id)}
+            />
+          ) : (
+            <span className="outline-bullet" />
+          ))}
         {isEditing ? (
           <NodeInput
             initial={node.title}
@@ -604,6 +640,7 @@ export function TreePane({
         ) : (
           <span className={`outline-title ${node.title ? "" : "untitled"}`}>
             {node.title || "제목 없음"}
+            {node.collapsed && <span className="outline-count">{countBelow(id)}</span>}
           </span>
         )}
         {!READ_ONLY && (
@@ -618,6 +655,7 @@ export function TreePane({
         )}
       </div>
     );
+    if (node.collapsed) return [row];
     return [row, ...node.children.flatMap((c) => renderOutlineRow(c, depth + 1, rowColor))];
   };
 
